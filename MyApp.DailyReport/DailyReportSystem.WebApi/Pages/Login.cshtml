@@ -1,0 +1,64 @@
+@page
+@{
+    ViewData["Title"] = "Tài Khoản";
+}
+
+<div style="max-width: 360px; margin: 4rem auto;">
+    <div class="enterprise-card">
+        <h2 style="font-size: 1.25rem; font-weight: 600; text-align: center; margin-bottom: 1.5rem;">Đăng nhập hệ thống</h2>
+        <div id="error-msg" class="alert alert-error" style="display:none;"></div>
+        
+        <form id="login-form">
+            <div class="form-group">
+                <label>Tài khoản</label>
+                <input type="text" id="username" required value="testuser">
+            </div>
+            <div class="form-group mb-8">
+                <label>Mật khẩu</label>
+                <input type="password" id="password" required value="12345">
+            </div>
+            <button type="submit" class="btn w-full">Tiếp tục</button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.textContent = 'Đang xác thực...';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch('/api/Auth/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+            localStorage.setItem('token', data.token);
+            const payloadStr = atob(data.token.split('.')[1]);
+            const payloadObj = JSON.parse(payloadStr);
+            const userId = payloadObj.nameid || payloadObj['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+            localStorage.setItem('userId', userId);
+            
+            window.location.href = '/SubmitReport';
+        } else {
+            document.getElementById('error-msg').textContent = data.message || "Xác thực thất bại. Vui lòng thử lại.";
+            document.getElementById('error-msg').style.display = 'block';
+        }
+    } catch(err) {
+        document.getElementById('error-msg').textContent = "Lỗi kết nối máy chủ.";
+        document.getElementById('error-msg').style.display = 'block';
+    } finally {
+        btn.textContent = 'Tiếp tục';
+        btn.disabled = false;
+    }
+});
+</script>

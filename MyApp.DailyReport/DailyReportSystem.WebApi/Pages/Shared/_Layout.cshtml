@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Enterprise Portal</title>
+    <!-- Modern Enterprise Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">DAILY REPORT SYSTEM</div>
+            <ul class="nav-links">
+                <li><a href="/">Tổng quan</a></li>
+                <li id="nav-login"><a href="/Login">Đăng nhập</a></li>
+                <li id="nav-submit" style="display:none;"><a href="/SubmitReport">Nộp Báo Cáo</a></li>
+                <li id="nav-reports" style="display:none;"><a href="/MyReports">Danh sách Báo Cáo</a></li>
+                <li id="nav-logout" style="display:none;"><a href="#" onclick="logout()">Đăng xuất</a></li>
+                <li><a href="/swagger" target="_blank">Tài liệu API</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="container">
+        @RenderBody()
+    </main>
+    <footer>
+        <p class="footer-text">&copy; 2026 - SWD392 Internal Operations Tool</p>
+    </footer>
+
+    <script>
+        function updateNav() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                document.getElementById('nav-login').style.display = 'none';
+                document.getElementById('nav-submit').style.display = 'block';
+                document.getElementById('nav-reports').style.display = 'block';
+                document.getElementById('nav-logout').style.display = 'block';
+            } else {
+                document.getElementById('nav-login').style.display = 'block';
+                document.getElementById('nav-submit').style.display = 'none';
+                document.getElementById('nav-reports').style.display = 'none';
+                document.getElementById('nav-logout').style.display = 'none';
+            }
+        }
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            window.location.href = '/Login';
+        }
+        document.addEventListener('DOMContentLoaded', updateNav);
+    </script>
+</body>
+</html>

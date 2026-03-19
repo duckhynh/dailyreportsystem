@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="DailyReportSystem.Application/DailyReportSystem.Application.csproj" />
+  <Project Path="DailyReportSystem.Core/DailyReportSystem.Core.csproj" />
+  <Project Path="DailyReportSystem.Infrastructure/DailyReportSystem.Infrastructure.csproj" />
+  <Project Path="DailyReportSystem.WebApi/DailyReportSystem.WebApi.csproj" />
+</Solution>

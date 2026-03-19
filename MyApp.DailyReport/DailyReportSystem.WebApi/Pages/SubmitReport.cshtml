@@ -1,0 +1,99 @@
+@page
+@{
+    ViewData["Title"] = "Thêm báo cáo";
+}
+
+<div style="max-width: 600px; margin: 0 auto;">
+    <div class="mb-4">
+        <h1 style="font-size: 1.5rem; font-weight: 600;">Thông tin báo cáo hằng ngày</h1>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">Vui lòng điền đầy đủ và chính xác các trường dưới đây.</p>
+    </div>
+
+    <div class="enterprise-card">
+        <div id="status-msg" class="alert" style="display:none;"></div>
+        
+        <form id="report-form">
+            <div class="form-group">
+                <label>Mã Dự Án tham gia (Project ID)</label>
+                <input type="number" id="projectId" required placeholder="Ví dụ: 1">
+                <small>Nhập mã dự án bạn được phân công. (Dự án hợp lệ mặc định là 1).</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Nội dung hoàn thành trong ngày</label>
+                <textarea id="tasksDone" required rows="4" placeholder="Mô tả công việc..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Vấn đề phát sinh (Nếu có)</label>
+                <textarea id="issues" rows="2" placeholder="Nêu rủi ro hoặc blocker..."></textarea>
+            </div>
+            
+            <div class="form-group mb-8">
+                <label>Dự kiến công việc ngày mai</label>
+                <textarea id="tomorrowPlan" required rows="2" placeholder="Lên kế hoạch ngắn gọn..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn w-full">Gửi Báo Cáo</button>
+        </form>
+    </div>
+</div>
+
+<script>
+if(!localStorage.getItem('token')) {
+    window.location.href = '/Login';
+}
+
+document.getElementById('report-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    const userId = parseInt(localStorage.getItem('userId'), 10);
+    const msgBox = document.getElementById('status-msg');
+    const btn = e.target.querySelector('button');
+    btn.textContent = 'Đang xử lý...';
+    btn.disabled = true;
+    
+    msgBox.style.display = 'none';
+    msgBox.className = 'alert';
+
+    try {
+        const payload = {
+            userId: userId,
+            projectId: parseInt(document.getElementById('projectId').value, 10),
+            tasksDone: document.getElementById('tasksDone').value,
+            issues: document.getElementById('issues').value,
+            tomorrowPlan: document.getElementById('tomorrowPlan').value
+        };
+
+        const res = await fetch('/api/Report', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+            msgBox.style.display = 'block';
+            msgBox.classList.add('alert-success');
+            msgBox.innerHTML = `Lưu thành công. Mã biên lai: #${data.id}`;
+            document.getElementById('report-form').reset();
+        } else {
+            msgBox.style.display = 'block';
+            msgBox.classList.add('alert-error');
+            const errorMessage = data.message || data.error || (data.errors ? JSON.stringify(data.errors) : "Dữ liệu không hợp lệ.");
+            msgBox.innerHTML = `Lỗi hệ thống: ${errorMessage}`;
+        }
+    } catch(err) {
+        msgBox.style.display = 'block';
+        msgBox.classList.add('alert-error');
+        msgBox.innerHTML = `Lỗi kết nối HTTP.`;
+    } finally {
+        btn.textContent = 'Gửi Báo Cáo';
+        btn.disabled = false;
+    }
+});
+</script>

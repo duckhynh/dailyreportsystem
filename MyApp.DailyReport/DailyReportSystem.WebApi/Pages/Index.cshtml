@@ -1,0 +1,32 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="mb-8">
+    <h1 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem;">Cổng thông tin Báo Cáo Hệ Thống</h1>
+    <p style="color: var(--text-muted); font-size: 0.875rem;">Kiểm tra tổng quan trạng thái API nội bộ C#.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+    <div class="enterprise-card">
+        <label>TỔNG SỐ DỰ ÁN</label>
+        <div style="font-size: 2rem; font-weight: 700; color: var(--text-main); margin-top: 0.5rem;">@Model.ProjectCount</div>
+    </div>
+
+    <div class="enterprise-card">
+        <label>TÌNH TRẠNG KẾT NỐI</label>
+        <div style="font-size: 1rem; font-weight: 500; color: var(--success-text); margin-top: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--success-text);"></span>    
+            Hoạt động bình thường
+        </div>
+    </div>
+
+    <div class="enterprise-card">
+        <label>API TÀI LIỆU</label>
+        <div style="margin-top: 1rem;">
+            <a href="/swagger" class="btn btn-outline" style="width: 100%;">Truy cập Swagger</a>
+        </div>
+    </div>
+</div>

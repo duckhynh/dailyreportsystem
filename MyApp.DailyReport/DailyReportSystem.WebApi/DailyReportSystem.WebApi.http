@@ -1,0 +1,6 @@
+@DailyReportSystem.WebApi_HostAddress = http://localhost:5207
+
+GET {{DailyReportSystem.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
