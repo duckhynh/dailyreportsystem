@@ -1,40 +1,36 @@
 @page
-@{
-    ViewData["Title"] = "Nộp báo cáo";
-}
+@{ ViewData["Title"] = "Thêm báo cáo"; }
 
-<div style="max-width: 650px; margin: 0 auto;">
-    <div class="page-header mb-8">
-        <h1 class="page-title">Gửi Báo Cáo Hàng Ngày</h1>
-        <p class="page-desc">Thông tin sẽ được ghi nhận và nạp tự động liên thông với Data Server.</p>
-    </div>
-
-    <div class="enterprise-card">
-        <div id="status-msg" class="alert" style="display:none;"></div>
+<div class="panel" style="max-width: 800px; margin: 0 auto;">
+    <div class="panel-heading">Ghi nhận công việc thực tập (Submit Daily Report)</div>
+    <div class="panel-body">
+        <div id="status-msg" style="display:none;"></div>
         
         <form id="report-form">
-            <div class="form-group" style="padding: 1.25rem; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 2rem;">
-                <label style="color: var(--accent); font-size: 0.95rem;">Mã Dự Án (Project ID)</label>
-                <input type="number" id="projectId" required placeholder="1" style="max-width: 200px; margin-top: 0.5rem; font-weight: 600;">
-                <small style="margin-top:0.75rem;">🔑 Dự án hợp lệ để nộp hiện tại là mã số <strong style="color:var(--text-main); background:#fff; padding:2px 6px; border-radius:4px; border:1px solid #cbd5e1;">1</strong>. Test hệ thống bằng cấp mã khác sẽ thu được Exception!</small>
+            <div class="form-group" style="padding: 15px; background: #f9f9f9; border: 1px solid #eee; border-radius: 4px;">
+                <label style="color: #d9530f;">Mã Dự án tham gia (Project ID):</label>
+                <input type="number" id="projectId" class="form-control" style="max-width: 200px;" placeholder="Ví dụ: 1" required>
+                <span class="help-block" style="font-size: 13px; color: #555;">(Dự án này bạn được phân công vào mã dự án = 1 trên CSDL)</span>
             </div>
             
             <div class="form-group">
-                <label>Công việc đã hoàn thành</label>
-                <textarea id="tasksDone" required rows="4" placeholder="Mô tả các hạng mục công việc đã thực hiện trong hôm nay..."></textarea>
+                <label>Công việc đã hoàn thành (Tasks Done):</label>
+                <textarea id="tasksDone" class="form-control" rows="4" required></textarea>
             </div>
             
             <div class="form-group">
-                <label>Vấn đề phát sinh & Tồn đọng</label>
-                <textarea id="issues" rows="3" placeholder="Các lỗi, rủi ro dự án (Nêu rõ nếu có)..."></textarea>
+                <label>Khó khăn/Vướng mắc (Issues):</label>
+                <textarea id="issues" class="form-control" rows="2"></textarea>
             </div>
             
-            <div class="form-group mb-8">
-                <label>Kế hoạch ngày làm việc tiếp theo</label>
-                <textarea id="tomorrowPlan" required rows="3" placeholder="Dự kiến hạng mục công việc ngày mai..."></textarea>
+            <div class="form-group">
+                <label>Kế hoạch ngày mai (Tomorrow's Plan):</label>
+                <textarea id="tomorrowPlan" class="form-control" rows="3" required></textarea>
             </div>
             
-            <button type="submit" class="btn w-full" style="font-size: 1rem; padding: 0.875rem;">Push Data (Sync Server)</button>
+            <hr style="margin: 20px 0;">
+            <button type="submit" class="btn btn-primary" style="min-width: 100px;">Save changes</button>
+            <a href="/" class="btn btn-default" style="margin-left: 10px;">Return</a>
         </form>
     </div>
 </div>
@@ -47,18 +43,17 @@ if(!localStorage.getItem('token')) {
 document.getElementById('report-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
-    const userId = parseInt(localStorage.getItem('userId'), 10);
     const msgBox = document.getElementById('status-msg');
     const btn = e.target.querySelector('button');
-    btn.textContent = 'Đang đồng bộ Database...';
-    btn.disabled = true;
     
+    btn.disabled = true;
+    btn.textContent = "Processing...";
     msgBox.style.display = 'none';
-
+    
     try {
         const payload = {
-            userId: userId,
-            projectId: parseInt(document.getElementById('projectId').value, 10),
+            userId: parseInt(localStorage.getItem('userId')),
+            projectId: parseInt(document.getElementById('projectId').value),
             tasksDone: document.getElementById('tasksDone').value,
             issues: document.getElementById('issues').value,
             tomorrowPlan: document.getElementById('tomorrowPlan').value
@@ -66,9 +61,9 @@ document.getElementById('report-form').addEventListener('submit', async (e) => {
 
         const res = await fetch('/api/Report', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}` 
             },
             body: JSON.stringify(payload)
         });
@@ -76,25 +71,24 @@ document.getElementById('report-form').addEventListener('submit', async (e) => {
         const data = await res.json();
         
         if (res.ok) {
-            msgBox.style.display = 'flex';
             msgBox.className = 'alert alert-success';
-            msgBox.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="min-width: 20px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Thành công xuất phôi! Mã tham chiếu Report ID: #${data.id}`;
+            msgBox.innerHTML = `<strong>Thành công!</strong> Đã thêm biên lai lưu trữ vào DB. Mã Record ID: ${data.id}`;
+            msgBox.style.display = 'block';
             document.getElementById('report-form').reset();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo(0,0);
         } else {
-            msgBox.style.display = 'flex';
-            msgBox.className = 'alert alert-error';
-            const errorMessage = data.message || data.error || (data.errors ? JSON.stringify(data.errors) : "Dữ liệu không hợp lệ.");
-            msgBox.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="min-width: 20px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Endpoint C# chặn lại: ${errorMessage}`;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            msgBox.className = 'alert alert-danger';
+            msgBox.innerHTML = `<strong>Thất bại!</strong> Chấm dứt thao tác do vi phạm Business Logic: ${data.message || data.error || "Dữ liệu sai."}`;
+            msgBox.style.display = 'block';
+            window.scrollTo(0,0);
         }
     } catch(err) {
-        msgBox.style.display = 'flex';
-        msgBox.className = 'alert alert-error';
-        msgBox.innerHTML = `Lỗi mạng khi kết nối HTTP.`;
+        msgBox.className = 'alert alert-danger';
+        msgBox.innerHTML = `<strong>Lỗi kết nối Socket TCP!</strong> C# Server không phản hồi.`;
+        msgBox.style.display = 'block';
     } finally {
-        btn.textContent = 'Push Data (Sync Server)';
         btn.disabled = false;
+        btn.textContent = "Save changes";
     }
 });
 </script>

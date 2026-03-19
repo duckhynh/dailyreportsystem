@@ -1,35 +1,30 @@
 @page
-@{
-    ViewData["Title"] = "Quản lý Báo Cáo";
-}
+@{ ViewData["Title"] = "Lịch sử báo cáo"; }
 
-<div class="page-header mb-8">
-    <h1 class="page-title">Sổ Lịch sử Báo Cáo</h1>
-    <p class="page-desc">Bảng truy xuất Real-Time tự động bẻ gãy từ API `/user/{id}` dưới dạng chuẩn Tailwind Data Table.</p>
-</div>
-
-<div class="enterprise-card" style="padding: 0; overflow-x: auto; background-color: #fff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);">
-    <div id="loading" style="padding: 3rem; text-align: center; color: var(--text-muted);">
-        <svg style="animation: spin 1s linear infinite; display: inline-block; margin-bottom: 1rem; color: var(--accent);" xmlns="http://www.w3.org/2007/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="24" height="24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m0 14v1m8-8h1M4 12H3m14.485-6.485l.707-.707M6.343 17.657l-.707.707m12.02-12.02l-.707.707M6.879 6.879l.293.293"></path>
-        </svg>
-        <br>Đang đồng bộ dữ liệu...
+<div class="panel">
+    <div class="panel-heading" style="display:flex; justify-content: space-between; align-items: center;">
+        Tra cứu danh sách chuyên cần (Report History)
     </div>
-
-    <table id="reportTable" class="minimal-table" style="display:none;">
-        <thead>
-            <tr>
-                <th style="border-left: none;">Mã số BC</th>
-                <th>Dự án</th>
-                <th>Danh sách Công việc</th>
-                <th>Vấn đề</th>
-                <th style="border-right: none;">Ngày tạo (Hệ thống)</th>
-            </tr>
-        </thead>
-        <tbody id="reportTableBody">
-            <!-- Render ngầm Javascript -->
-        </tbody>
-    </table>
+    <div class="panel-body">
+        
+        <div id="loading" style="padding: 10px; color: #8a6d3b;"><i>Hệ thống API đang tải danh sách của bạn...</i></div>
+        
+        <div class="table-responsive" style="margin-top: 10px;">
+            <table id="reportTable" class="table table-bordered table-striped table-hover" style="display:none;">
+                <thead>
+                    <tr>
+                        <th style="width: 5%; text-align: center;">Mã (#)</th>
+                        <th style="width: 10%; text-align: center;">Dự Án</th>
+                        <th style="width: 40%;">Chi tiết Công việc</th>
+                        <th style="width: 25%;">Vấn đề tồn đọng</th>
+                        <th style="width: 20%; text-align: center;">Ngày nộp (Timestamp)</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -38,52 +33,45 @@ if(!localStorage.getItem('token')) {
 }
 
 async function loadReports() {
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
-    const tbody = document.getElementById('reportTableBody');
     const table = document.getElementById('reportTable');
+    const tbody = document.getElementById('reportTableBody');
     const loading = document.getElementById('loading');
-
+    
     try {
-        const res = await fetch(`/api/Report/user/${userId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+        const res = await fetch(`/api/Report/user/${localStorage.getItem('userId')}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
-
+        
         if (res.ok) {
             const reports = await res.json();
             loading.style.display = 'none';
             table.style.display = 'table';
             
             if(reports.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:3rem; color:var(--text-muted);">Hồ sơ trống. Chưa có dữ liệu phát sinh.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px;"><em>Sinh viên hiện tại chưa nộp báo cáo chuyên cần nào.</em></td></tr>`;
                 return;
             }
-
+            
             reports.forEach(r => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="font-weight: 600; color: var(--text-main);">#${r.id}</td>
-                    <td style="white-space: nowrap;">
-                        <span style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; color: #475569;">PRJ-${r.projectId}</span>
+                    <td style="text-align:center;"><b>${r.id}</b></td>
+                    <td style="text-align:center;">
+                        <span class="label" style="background:#5bc0de; color:white; padding: 2px 6px; border-radius: 3px; font-size: 12px;">PRJ-${r.projectId}</span>
                     </td>
-                    <td style="word-break: break-word; min-width: 250px; line-height: 1.5; color: #334155;">${r.tasksDone}</td>
-                    <td style="word-break: break-word; min-width: 200px; line-height: 1.5; color: #64748b;">${r.issues || '—'}</td>
-                    <td style="color:var(--text-muted); font-size:0.8rem; white-space: nowrap;">${new Date(r.createdAt).toLocaleString()}</td>
+                    <td style="word-break: break-word;">${r.tasksDone}</td>
+                    <td style="word-break: break-word; color:#737373;">${r.issues || '-'}</td>
+                    <td style="text-align:center; color:#777;">${new Date(r.createdAt).toLocaleString()}</td>
                 `;
                 tbody.appendChild(tr);
             });
         } else {
-            loading.innerHTML = "<span style='color:#e11d48; font-weight: 600;'>Đã xảy ra lỗi bảo mật: Phiên làm việc hết hạn.</span>";
+            loading.innerHTML = "<span style='color:#a94442;'>Lỗi phân quyền mạng ngầm (401 Unauthorized API).</span>";
         }
     } catch(err) {
-        loading.innerHTML = "<span style='color:#e11d48; font-weight: 600;'>Network Error. C# Server Offline.</span>";
+        loading.innerHTML = "<span style='color:#a94442;'>Chức năng tạm ngừng hoạt động do lỗi SQL Database.</span>";
     }
 }
 
 document.addEventListener('DOMContentLoaded', loadReports);
 </script>
-<style>
-@@keyframes spin { 100% { transform: rotate(360deg); } }
-</style>

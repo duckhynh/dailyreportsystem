@@ -1,49 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Daily Report</title>
-    <!-- Premium Typography -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Daily Report System - FPT University</title>
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
 <body>
-    <header>
-        <nav class="navbar">
-            <div class="logo">DailyReport</div>
-            <ul class="nav-links">
-                <li><a href="/">Tổng quan</a></li>
-                <li id="nav-login"><a href="/Login">Đăng nhập</a></li>
-                <li id="nav-submit" style="display:none;"><a href="/SubmitReport">Nộp Báo Cáo</a></li>
-                <li id="nav-reports" style="display:none;"><a href="/MyReports">Lịch sử BC</a></li>
-                <li id="nav-logout" style="display:none;"><a href="#" onclick="logout()">Đăng xuất</a></li>
-                <li><a href="/swagger" target="_blank" class="nav-btn">Tài liệu API API</a></li>
-            </ul>
-        </nav>
-    </header>
-    <main class="container">
+    <div class="fap-header">
+        <div class="brand">FPT University Academic Portal</div>
+        <div>
+            <span id="userGreeting" style="margin-right: 15px; font-weight: 500;"></span>
+            <a href="/Login" id="nav-login" style="color: white; text-decoration: underline;">Login</a>
+            <a href="#" id="nav-logout" style="color: white; text-decoration: underline; display: none;" onclick="logout()">Logout</a>
+        </div>
+    </div>
+    
+    <div class="fap-nav" id="nav-container">
+        <a href="/">Home</a>
+        <a href="/SubmitReport" id="nav-submit" style="display:none;">Thêm báo cáo (Submit Report)</a>
+        <a href="/MyReports" id="nav-reports" style="display:none;">Xem lịch sử (Report History)</a>
+        <a href="/swagger" target="_blank">Tài liệu API (Swagger API)</a>
+    </div>
+
+    <div class="container">
         @RenderBody()
-    </main>
-    <footer>
-        <p class="footer-text">&copy; 2026 - Premium Enterprise Software Architecture</p>
-    </footer>
+    </div>
 
     <script>
         function updateNav() {
             const token = localStorage.getItem('token');
             if (token) {
                 document.getElementById('nav-login').style.display = 'none';
-                document.getElementById('nav-submit').style.display = 'block';
-                document.getElementById('nav-reports').style.display = 'block';
-                document.getElementById('nav-logout').style.display = 'block';
+                document.getElementById('nav-submit').style.display = 'inline-block';
+                document.getElementById('nav-reports').style.display = 'inline-block';
+                document.getElementById('nav-logout').style.display = 'inline-block';
+                
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    const userId = payload.nameid || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+                    document.getElementById('userGreeting').textContent = "Welcome, Student ID: " + userId;
+                } catch(e) {}
             } else {
-                document.getElementById('nav-login').style.display = 'block';
+                document.getElementById('nav-login').style.display = 'inline-block';
                 document.getElementById('nav-submit').style.display = 'none';
                 document.getElementById('nav-reports').style.display = 'none';
                 document.getElementById('nav-logout').style.display = 'none';
+                document.getElementById('userGreeting').textContent = "";
             }
         }
         function logout() {

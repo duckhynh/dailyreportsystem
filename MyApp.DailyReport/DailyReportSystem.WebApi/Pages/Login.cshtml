@@ -1,24 +1,27 @@
 @page
-@{
-    ViewData["Title"] = "Tài Khoản";
-}
+@{ ViewData["Title"] = "Đăng nhập"; }
 
-<div style="max-width: 420px; margin: 4rem auto;">
-    <div class="enterprise-card">
-        <h2 class="page-title text-center mb-8" style="font-size: 1.5rem;">Đăng nhập hệ thống</h2>
-        <div id="error-msg" class="alert alert-error" style="display:none;"></div>
-        
-        <form id="login-form">
-            <div class="form-group">
-                <label>Tài khoản</label>
-                <input type="text" id="username" required value="testuser">
-            </div>
-            <div class="form-group mb-8">
-                <label>Mật khẩu</label>
-                <input type="password" id="password" required value="12345">
-            </div>
-            <button type="submit" class="btn w-full">Truy cập Dashboard</button>
-        </form>
+<div style="max-width: 450px; margin: 50px auto;">
+    <div class="panel">
+        <div class="panel-heading">Đăng nhập tài khoản hệ thống (Login)</div>
+        <div class="panel-body">
+            <div id="error-msg" class="alert alert-danger" style="display:none;"></div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Tên đăng nhập (Username):</label>
+                    <input type="text" id="username" class="form-control" value="testuser" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Mật khẩu (Password):</label>
+                    <input type="password" id="password" class="form-control" value="12345" required>
+                </div>
+                <hr style="margin: 20px 0;">
+                <div style="text-align: right;">
+                    <button type="submit" class="btn btn-warning" style="background-color: #f36f21; border-color: #d9530f; width: 100px;">Login</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -26,9 +29,7 @@
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button');
-    btn.textContent = 'Đang nhận diện vòng đeo tay...';
     btn.disabled = true;
-
     try {
         const res = await fetch('/api/Auth/login', {
             method: 'POST',
@@ -38,26 +39,21 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
                 password: document.getElementById('password').value
             })
         });
-        
         const data = await res.json();
         
         if (res.ok) {
             localStorage.setItem('token', data.token);
-            const payloadStr = atob(data.token.split('.')[1]);
-            const payloadObj = JSON.parse(payloadStr);
-            const userId = payloadObj.nameid || payloadObj['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
-            localStorage.setItem('userId', userId);
-            
+            const payload = JSON.parse(atob(data.token.split('.')[1]));
+            localStorage.setItem('userId', payload.nameid || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']);
             window.location.href = '/SubmitReport';
         } else {
-            document.getElementById('error-msg').innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="min-width: 20px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> ${data.message || "Tài khoản hoặc mật khẩu không chính xác."}`;
-            document.getElementById('error-msg').style.display = 'flex';
+            document.getElementById('error-msg').textContent = data.message || "Tài khoản hoặc mật khẩu không đúng.";
+            document.getElementById('error-msg').style.display = 'block';
         }
     } catch(err) {
-        document.getElementById('error-msg').textContent = "Lỗi kết nối máy chủ backend.";
-        document.getElementById('error-msg').style.display = 'flex';
+        document.getElementById('error-msg').textContent = "Lỗi ngắt kết nối với máy chủ.";
+        document.getElementById('error-msg').style.display = 'block';
     } finally {
-        btn.textContent = 'Truy cập Dashboard';
         btn.disabled = false;
     }
 });
