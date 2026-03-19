@@ -3,9 +3,9 @@
     ViewData["Title"] = "Tài Khoản";
 }
 
-<div style="max-width: 360px; margin: 4rem auto;">
+<div style="max-width: 420px; margin: 4rem auto;">
     <div class="enterprise-card">
-        <h2 style="font-size: 1.25rem; font-weight: 600; text-align: center; margin-bottom: 1.5rem;">Đăng nhập hệ thống</h2>
+        <h2 class="page-title text-center mb-8" style="font-size: 1.5rem;">Đăng nhập hệ thống</h2>
         <div id="error-msg" class="alert alert-error" style="display:none;"></div>
         
         <form id="login-form">
@@ -17,7 +17,7 @@
                 <label>Mật khẩu</label>
                 <input type="password" id="password" required value="12345">
             </div>
-            <button type="submit" class="btn w-full">Tiếp tục</button>
+            <button type="submit" class="btn w-full">Truy cập Dashboard</button>
         </form>
     </div>
 </div>
@@ -26,7 +26,7 @@
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button');
-    btn.textContent = 'Đang xác thực...';
+    btn.textContent = 'Đang nhận diện vòng đeo tay...';
     btn.disabled = true;
 
     try {
@@ -50,14 +50,14 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
             
             window.location.href = '/SubmitReport';
         } else {
-            document.getElementById('error-msg').textContent = data.message || "Xác thực thất bại. Vui lòng thử lại.";
-            document.getElementById('error-msg').style.display = 'block';
+            document.getElementById('error-msg').innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="min-width: 20px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> ${data.message || "Tài khoản hoặc mật khẩu không chính xác."}`;
+            document.getElementById('error-msg').style.display = 'flex';
         }
     } catch(err) {
-        document.getElementById('error-msg').textContent = "Lỗi kết nối máy chủ.";
-        document.getElementById('error-msg').style.display = 'block';
+        document.getElementById('error-msg').textContent = "Lỗi kết nối máy chủ backend.";
+        document.getElementById('error-msg').style.display = 'flex';
     } finally {
-        btn.textContent = 'Tiếp tục';
+        btn.textContent = 'Truy cập Dashboard';
         btn.disabled = false;
     }
 });

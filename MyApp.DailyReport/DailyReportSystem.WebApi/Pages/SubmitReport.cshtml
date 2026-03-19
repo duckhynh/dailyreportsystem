@@ -1,40 +1,40 @@
 @page
 @{
-    ViewData["Title"] = "Thêm báo cáo";
+    ViewData["Title"] = "Nộp báo cáo";
 }
 
-<div style="max-width: 600px; margin: 0 auto;">
-    <div class="mb-4">
-        <h1 style="font-size: 1.5rem; font-weight: 600;">Thông tin báo cáo hằng ngày</h1>
-        <p style="color: var(--text-muted); font-size: 0.875rem;">Vui lòng điền đầy đủ và chính xác các trường dưới đây.</p>
+<div style="max-width: 650px; margin: 0 auto;">
+    <div class="page-header mb-8">
+        <h1 class="page-title">Gửi Báo Cáo Hàng Ngày</h1>
+        <p class="page-desc">Thông tin sẽ được ghi nhận và nạp tự động liên thông với Data Server.</p>
     </div>
 
     <div class="enterprise-card">
         <div id="status-msg" class="alert" style="display:none;"></div>
         
         <form id="report-form">
-            <div class="form-group">
-                <label>Mã Dự Án tham gia (Project ID)</label>
-                <input type="number" id="projectId" required placeholder="Ví dụ: 1">
-                <small>Nhập mã dự án bạn được phân công. (Dự án hợp lệ mặc định là 1).</small>
+            <div class="form-group" style="padding: 1.25rem; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+                <label style="color: var(--accent); font-size: 0.95rem;">Mã Dự Án (Project ID)</label>
+                <input type="number" id="projectId" required placeholder="1" style="max-width: 200px; margin-top: 0.5rem; font-weight: 600;">
+                <small style="margin-top:0.75rem;">🔑 Dự án hợp lệ để nộp hiện tại là mã số <strong style="color:var(--text-main); background:#fff; padding:2px 6px; border-radius:4px; border:1px solid #cbd5e1;">1</strong>. Test hệ thống bằng cấp mã khác sẽ thu được Exception!</small>
             </div>
             
             <div class="form-group">
-                <label>Nội dung hoàn thành trong ngày</label>
-                <textarea id="tasksDone" required rows="4" placeholder="Mô tả công việc..."></textarea>
+                <label>Công việc đã hoàn thành</label>
+                <textarea id="tasksDone" required rows="4" placeholder="Mô tả các hạng mục công việc đã thực hiện trong hôm nay..."></textarea>
             </div>
             
             <div class="form-group">
-                <label>Vấn đề phát sinh (Nếu có)</label>
-                <textarea id="issues" rows="2" placeholder="Nêu rủi ro hoặc blocker..."></textarea>
+                <label>Vấn đề phát sinh & Tồn đọng</label>
+                <textarea id="issues" rows="3" placeholder="Các lỗi, rủi ro dự án (Nêu rõ nếu có)..."></textarea>
             </div>
             
             <div class="form-group mb-8">
-                <label>Dự kiến công việc ngày mai</label>
-                <textarea id="tomorrowPlan" required rows="2" placeholder="Lên kế hoạch ngắn gọn..."></textarea>
+                <label>Kế hoạch ngày làm việc tiếp theo</label>
+                <textarea id="tomorrowPlan" required rows="3" placeholder="Dự kiến hạng mục công việc ngày mai..."></textarea>
             </div>
             
-            <button type="submit" class="btn w-full">Gửi Báo Cáo</button>
+            <button type="submit" class="btn w-full" style="font-size: 1rem; padding: 0.875rem;">Push Data (Sync Server)</button>
         </form>
     </div>
 </div>
@@ -50,11 +50,10 @@ document.getElementById('report-form').addEventListener('submit', async (e) => {
     const userId = parseInt(localStorage.getItem('userId'), 10);
     const msgBox = document.getElementById('status-msg');
     const btn = e.target.querySelector('button');
-    btn.textContent = 'Đang xử lý...';
+    btn.textContent = 'Đang đồng bộ Database...';
     btn.disabled = true;
     
     msgBox.style.display = 'none';
-    msgBox.className = 'alert';
 
     try {
         const payload = {
@@ -77,22 +76,24 @@ document.getElementById('report-form').addEventListener('submit', async (e) => {
         const data = await res.json();
         
         if (res.ok) {
-            msgBox.style.display = 'block';
-            msgBox.classList.add('alert-success');
-            msgBox.innerHTML = `Lưu thành công. Mã biên lai: #${data.id}`;
+            msgBox.style.display = 'flex';
+            msgBox.className = 'alert alert-success';
+            msgBox.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="min-width: 20px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Thành công xuất phôi! Mã tham chiếu Report ID: #${data.id}`;
             document.getElementById('report-form').reset();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
-            msgBox.style.display = 'block';
-            msgBox.classList.add('alert-error');
+            msgBox.style.display = 'flex';
+            msgBox.className = 'alert alert-error';
             const errorMessage = data.message || data.error || (data.errors ? JSON.stringify(data.errors) : "Dữ liệu không hợp lệ.");
-            msgBox.innerHTML = `Lỗi hệ thống: ${errorMessage}`;
+            msgBox.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="min-width: 20px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Endpoint C# chặn lại: ${errorMessage}`;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     } catch(err) {
-        msgBox.style.display = 'block';
-        msgBox.classList.add('alert-error');
-        msgBox.innerHTML = `Lỗi kết nối HTTP.`;
+        msgBox.style.display = 'flex';
+        msgBox.className = 'alert alert-error';
+        msgBox.innerHTML = `Lỗi mạng khi kết nối HTTP.`;
     } finally {
-        btn.textContent = 'Gửi Báo Cáo';
+        btn.textContent = 'Push Data (Sync Server)';
         btn.disabled = false;
     }
 });

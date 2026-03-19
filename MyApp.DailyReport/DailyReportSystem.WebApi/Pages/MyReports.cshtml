@@ -3,22 +3,27 @@
     ViewData["Title"] = "Quản lý Báo Cáo";
 }
 
-<div class="mb-4">
-    <h1 style="font-size: 1.5rem; font-weight: 600;">Lịch sử Báo Cáo</h1>
-    <p style="color: var(--text-muted); font-size: 0.875rem;">Thông kê danh sách báo cáo bạn đã gửi lên cơ sở dữ liệu.</p>
+<div class="page-header mb-8">
+    <h1 class="page-title">Sổ Lịch sử Báo Cáo</h1>
+    <p class="page-desc">Bảng truy xuất Real-Time tự động bẻ gãy từ API `/user/{id}` dưới dạng chuẩn Tailwind Data Table.</p>
 </div>
 
-<div class="enterprise-card" style="padding: 0; overflow-x: auto;">
-    <div id="loading" style="padding: 2rem; text-align: center; color: var(--text-muted);">Đang truy xuất hệ thống...</div>
+<div class="enterprise-card" style="padding: 0; overflow-x: auto; background-color: #fff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);">
+    <div id="loading" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+        <svg style="animation: spin 1s linear infinite; display: inline-block; margin-bottom: 1rem; color: var(--accent);" xmlns="http://www.w3.org/2007/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="24" height="24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m0 14v1m8-8h1M4 12H3m14.485-6.485l.707-.707M6.343 17.657l-.707.707m12.02-12.02l-.707.707M6.879 6.879l.293.293"></path>
+        </svg>
+        <br>Đang đồng bộ dữ liệu...
+    </div>
 
     <table id="reportTable" class="minimal-table" style="display:none;">
         <thead>
             <tr>
-                <th>Mã BC</th>
+                <th style="border-left: none;">Mã số BC</th>
                 <th>Dự án</th>
-                <th>Công việc</th>
+                <th>Danh sách Công việc</th>
                 <th>Vấn đề</th>
-                <th>Ngày tạo</th>
+                <th style="border-right: none;">Ngày tạo (Hệ thống)</th>
             </tr>
         </thead>
         <tbody id="reportTableBody">
@@ -52,30 +57,33 @@ async function loadReports() {
             table.style.display = 'table';
             
             if(reports.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-muted);">Chưa có dữ liệu.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:3rem; color:var(--text-muted);">Hồ sơ trống. Chưa có dữ liệu phát sinh.</td></tr>`;
                 return;
             }
 
             reports.forEach(r => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="font-weight: 500;">#${r.id}</td>
-                    <td>PRJ-${r.projectId}</td>
-                    <td><div style="max-width:250px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${r.tasksDone}">${r.tasksDone}</div></td>
-                    <td><div style="max-width:150px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.issues || '-'}</div></td>
-                    <td style="color:var(--text-muted); font-size:0.75rem;">${new Date(r.createdAt).toLocaleString()}</td>
+                    <td style="font-weight: 600; color: var(--text-main);">#${r.id}</td>
+                    <td style="white-space: nowrap;">
+                        <span style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; color: #475569;">PRJ-${r.projectId}</span>
+                    </td>
+                    <td style="word-break: break-word; min-width: 250px; line-height: 1.5; color: #334155;">${r.tasksDone}</td>
+                    <td style="word-break: break-word; min-width: 200px; line-height: 1.5; color: #64748b;">${r.issues || '—'}</td>
+                    <td style="color:var(--text-muted); font-size:0.8rem; white-space: nowrap;">${new Date(r.createdAt).toLocaleString()}</td>
                 `;
                 tbody.appendChild(tr);
             });
         } else {
-            loading.textContent = "Không có quyền truy cập.";
-            loading.classList.add('alert-error');
+            loading.innerHTML = "<span style='color:#e11d48; font-weight: 600;'>Đã xảy ra lỗi bảo mật: Phiên làm việc hết hạn.</span>";
         }
     } catch(err) {
-        loading.textContent = "Lỗi kết nối mạng.";
-        loading.classList.add('alert-error');
+        loading.innerHTML = "<span style='color:#e11d48; font-weight: 600;'>Network Error. C# Server Offline.</span>";
     }
 }
 
 document.addEventListener('DOMContentLoaded', loadReports);
 </script>
+<style>
+@@keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
