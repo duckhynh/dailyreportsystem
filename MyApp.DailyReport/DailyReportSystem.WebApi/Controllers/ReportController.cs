@@ -19,6 +19,7 @@ namespace DailyReportSystem.WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Employee")]
         public async Task<IActionResult> CreateReport([FromBody] ReportCreateDTO dto)
         {
             if (!ModelState.IsValid)

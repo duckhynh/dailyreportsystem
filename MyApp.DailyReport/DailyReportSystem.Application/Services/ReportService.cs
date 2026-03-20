@@ -19,23 +19,20 @@ namespace DailyReportSystem.Application.Services
 
         public async Task<DailyReport> CreateReportAsync(ReportCreateDTO dto)
         {
-            // Xác thực nghiệp vụ: Nhân viên có thuộc dự án không?
-            bool isAssigned = await _userRepository.IsAssignedToProjectAsync(dto.UserId, dto.ProjectId);
-            if (!isAssigned)
-            {
-                throw new Exception("Lỗi nghiệp vụ: Bạn không được phân công vào Dự án này!");
-            }
-            
-            // Validation is mostly handled by DTO annotations, but additional logic can be added here
+            // Do yêu cầu "Không cần bắt buộc assign employee", ta bỏ qua validation IsAssignedToProjectAsync
             
             var report = new DailyReport
             {
                 UserId = dto.UserId,
                 ProjectId = dto.ProjectId,
+                ProjectTaskId = dto.ProjectTaskId,
                 ReportDate = DateTime.UtcNow.Date,
                 TasksDone = dto.TasksDone,
+                WorkQuantity = dto.WorkQuantity,
+                WorkDescription = dto.WorkDescription,
                 Issues = dto.Issues,
                 TomorrowPlan = dto.TomorrowPlan,
+                Department = dto.Department,
                 CreatedAt = DateTime.UtcNow
             };
 

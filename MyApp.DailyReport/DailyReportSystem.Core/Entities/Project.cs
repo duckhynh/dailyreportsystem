@@ -12,5 +12,6 @@ namespace DailyReportSystem.Core.Entities
 
         public ICollection<DailyReport> DailyReports { get; set; } = new List<DailyReport>();
         public ICollection<UserProject> UserProjects { get; set; } = new List<UserProject>();
+        public ICollection<ProjectTask> ProjectTasks { get; set; } = new List<ProjectTask>();
     }
 }

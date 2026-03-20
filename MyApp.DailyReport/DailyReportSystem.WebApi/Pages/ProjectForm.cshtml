@@ -1,0 +1,79 @@
+@page
+@{ ViewData["Title"] = "Thêm/Sửa Dự án"; }
+
+<div class="panel" style="max-width: 600px; margin: 0 auto;">
+    <div class="panel-heading" id="form-title">Dự án mới</div>
+    <div class="panel-body">
+        <form id="prj-form">
+            <div class="form-group">
+                <label>Tên Dự án:</label>
+                <input type="text" id="projectName" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Mô tả Dự án:</label>
+                <textarea id="description" class="form-control" rows="3"></textarea>
+            </div>
+            
+            <div class="form-group" id="quick-task-group" style="padding: 15px; background: #f0f7fd; border: 1px solid #cce5ff; border-radius: 4px; margin-top: 15px;">
+                <label style="color: #0056b3;">Khởi tạo nhanh các Công việc (Tasks):</label>
+                <p style="font-size: 13px; color: #555; margin-bottom: 5px;">*Tùy chọn: Nhập danh sách tên công việc để hệ thống móc thẳng vào Dự án mới. Hãy xuống dòng đối với mỗi Task mới. (Ví dụ:<br>- Phân tích yêu cầu...<br>- Thiết kế Database...)</p>
+                <textarea id="taskNames" class="form-control" rows="4" placeholder="Nhập tại đây..."></textarea>
+            </div>
+
+            <hr style="margin: 20px 0;">
+            <button type="submit" class="btn btn-primary">Lưu lại</button>
+            <a href="/Projects" class="btn btn-default" style="margin-left: 10px;">Quay lại</a>
+        </form>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('id');
+
+    if (editId) {
+        document.getElementById('form-title').innerText = "Sửa Dự án #" + editId;
+        // Ẩn bảng khởi tạo nhanh nếu đang trong chế độ Edit Project
+        document.getElementById('quick-task-group').style.display = 'none';
+        
+        fetch(`/api/Project/${editId}`, { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('projectName').value = data.projectName;
+                document.getElementById('description').value = data.description;
+            });
+    }
+
+    document.getElementById('prj-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        let taskList = [];
+        if (!editId) {
+            const rawTasks = document.getElementById('taskNames').value;
+            taskList = rawTasks.split('\n').map(t => t.trim().replace(/^- /, '')).filter(t => t.length > 0);
+        }
+
+        const payload = {
+            projectName: document.getElementById('projectName').value,
+            description: document.getElementById('description').value,
+            taskNames: taskList
+        };
+        
+        const method = editId ? 'PUT' : 'POST';
+        const url = editId ? `/api/Project/${editId}` : '/api/Project';
+        
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
+        });
+        
+        if (res.ok) {
+            alert('Lưu thành công!');
+            window.location.href = '/Projects';
+        } else {
+            alert('Lỗi khi lưu dữ liệu');
+        }
+    });
+</script>

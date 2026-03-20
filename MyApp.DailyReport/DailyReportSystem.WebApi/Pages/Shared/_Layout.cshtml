@@ -7,7 +7,7 @@
 </head>
 <body>
     <div class="fap-header">
-        <div class="brand">FPT University Academic Portal</div>
+        <div class="brand">FPT DailyReport System</div>
         <div>
             <span id="userGreeting" style="margin-right: 15px; font-weight: 500;"></span>
             <a href="/Login" id="nav-login" style="color: white; text-decoration: underline;">Login</a>
@@ -19,7 +19,8 @@
         <a href="/">Home</a>
         <a href="/SubmitReport" id="nav-submit" style="display:none;">Thêm báo cáo (Submit Report)</a>
         <a href="/MyReports" id="nav-reports" style="display:none;">Xem lịch sử (Report History)</a>
-        <a href="/swagger" target="_blank">Tài liệu API (Swagger API)</a>
+        <a href="/Projects" id="nav-projects" style="display:none;">Quản lý Projects</a>
+        <a href="/Users" id="nav-users" style="display:none; color: #ffeb3b; font-weight: bold;">Quản lý Users (Admin)</a>
     </div>
 
     <div class="container">
@@ -31,19 +32,34 @@
             const token = localStorage.getItem('token');
             if (token) {
                 document.getElementById('nav-login').style.display = 'none';
-                document.getElementById('nav-submit').style.display = 'inline-block';
-                document.getElementById('nav-reports').style.display = 'inline-block';
                 document.getElementById('nav-logout').style.display = 'inline-block';
                 
                 try {
                     const payload = JSON.parse(atob(token.split('.')[1]));
                     const userId = payload.nameid || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
-                    document.getElementById('userGreeting').textContent = "Welcome, Student ID: " + userId;
+                    const username = payload.unique_name || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || "User";
+                    const fullName = localStorage.getItem('fullName') || username;
+                    const role = payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+                    
+                    document.getElementById('userGreeting').textContent = "Welcome, " + fullName + " (" + role + ")";
+                    
+                    if(role === "Employee") {
+                        document.getElementById('nav-submit').style.display = 'inline-block';
+                        document.getElementById('nav-reports').style.display = 'inline-block';
+                    }
+                    if(role === "Manager") {
+                        document.getElementById('nav-projects').style.display = 'inline-block';
+                    }
+                    if(role === "Admin") {
+                        document.getElementById('nav-users').style.display = 'inline-block';
+                    }
                 } catch(e) {}
             } else {
                 document.getElementById('nav-login').style.display = 'inline-block';
                 document.getElementById('nav-submit').style.display = 'none';
                 document.getElementById('nav-reports').style.display = 'none';
+                document.getElementById('nav-projects').style.display = 'none';
+                document.getElementById('nav-users').style.display = 'none';
                 document.getElementById('nav-logout').style.display = 'none';
                 document.getElementById('userGreeting').textContent = "";
             }
@@ -51,6 +67,7 @@
         function logout() {
             localStorage.removeItem('token');
             localStorage.removeItem('userId');
+            localStorage.removeItem('fullName');
             window.location.href = '/Login';
         }
         document.addEventListener('DOMContentLoaded', updateNav);

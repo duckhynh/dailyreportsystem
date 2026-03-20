@@ -1,0 +1,106 @@
+@page
+@{ ViewData["Title"] = "Quản lý Người dùng"; }
+
+<div class="panel" style="max-width: 900px; margin: 0 auto;">
+    <div class="panel-heading">Quản lý Người dùng (Manager Users)</div>
+    <div class="panel-body">
+        <div id="status-msg" style="display:none;"></div>
+        
+        <div style="margin-bottom: 20px;">
+            <button class="btn btn-primary" onclick="window.location.href='/UserForm'">Tạo mới người dùng (Create User)</button>
+        </div>
+
+        <table class="table" style="width: 100%; border: 1px solid #ddd; text-align: left;" cellpadding="8">
+            <thead style="background: #f1f1f1;">
+                <tr>
+                    <th style="border-bottom: 2px solid #ddd;">ID</th>
+                    <th style="border-bottom: 2px solid #ddd;">Tài khoản</th>
+                    <th style="border-bottom: 2px solid #ddd;">Họ tên</th>
+                    <th style="border-bottom: 2px solid #ddd;">Email</th>
+                    <th style="border-bottom: 2px solid #ddd;">Vai trò</th>
+                    <th style="border-bottom: 2px solid #ddd;">Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="users-tbody">
+                <tr><td colspan="6" style="text-align:center;">Đang tải dữ liệu...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/Login';
+    } else {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const role = payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || payload.role;
+            if (role !== "Admin") {
+                alert("Bạn không có quyền truy cập trang này!");
+                window.location.href = '/';
+            }
+        } catch(e) {}
+    }
+
+    async function loadUsers() {
+        try {
+            const res = await fetch('/api/User', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const tbody = document.getElementById('users-tbody');
+                tbody.innerHTML = '';
+                if(data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Không có dữ liệu.</td></tr>';
+                    return;
+                }
+                data.forEach(u => {
+                    const row = document.createElement('tr');
+                    
+                    let roleColor = u.roleName === 'Admin' ? 'red' : (u.roleName === 'Manager' ? 'orange' : 'green');
+
+                    row.innerHTML = `
+                        <td style="border-bottom: 1px solid #eee;">${u.id}</td>
+                        <td style="border-bottom: 1px solid #eee;"><b>${u.username}</b></td>
+                        <td style="border-bottom: 1px solid #eee;">${u.fullName}</td>
+                        <td style="border-bottom: 1px solid #eee;">${u.email}</td>
+                        <td style="border-bottom: 1px solid #eee; color: ${roleColor}; font-weight: bold;">${u.roleName}</td>
+                        <td style="border-bottom: 1px solid #eee;">
+                            <button class="btn btn-default" style="padding: 2px 8px; font-size: 13px;" onclick="editUser(${u.id})">Edit</button>
+                            ${u.username === 'admin' ? '' : `<button class="btn btn-danger" style="padding: 2px 8px; font-size: 13px;" onclick="deleteUser(${u.id})">Del</button>`}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                if (res.status === 403 || res.status === 401) {
+                    alert('Bạn không có quyền xem thông tin.');
+                }
+            }
+        } catch(e) {
+            console.error(e);
+        }
+    }
+
+    function editUser(id) {
+        window.location.href = `/UserForm?id=${id}`;
+    }
+
+    async function deleteUser(id) {
+        if (!confirm('Bạn có chắc chắn muốn xoá người dùng ID ' + id + '? Thao tác này có thể xóa cả các report liên quan.')) return;
+        const res = await fetch(`/api/User/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            alert('Xoá thành công!');
+            loadUsers();
+        } else {
+            alert('Có lỗi xảy ra khi xoá!');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadUsers);
+</script>

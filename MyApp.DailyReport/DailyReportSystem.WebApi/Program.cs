@@ -20,6 +20,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
 
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
@@ -52,18 +54,24 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    context.Database.EnsureCreated();
+    context.Database.Migrate();
     if (!context.Users.Any())
     {
         // Nhường quyền tự sinh ID cho CSDL (tránh lỗi IDENTITY_INSERT)
-        var testUser = new DailyReportSystem.Core.Entities.User { Username = "testuser", PasswordHash = "12345", FullName = "Nguyễn Văn Test", Role = DailyReportSystem.Core.Enums.RoleType.User };
+        var testAdmin = new DailyReportSystem.Core.Entities.User { Username = "admin", PasswordHash = BCrypt.Net.BCrypt.HashPassword("12345"), FullName = "Nguyễn Văn Admin", Role = DailyReportSystem.Core.Enums.RoleType.Admin };
+        var testManager = new DailyReportSystem.Core.Entities.User { Username = "manager", PasswordHash = BCrypt.Net.BCrypt.HashPassword("12345"), FullName = "Trần Văn Manager", Role = DailyReportSystem.Core.Enums.RoleType.Manager };
+        var testEmployee = new DailyReportSystem.Core.Entities.User { Username = "testuser", PasswordHash = BCrypt.Net.BCrypt.HashPassword("12345"), FullName = "Nguyễn Văn Test", Role = DailyReportSystem.Core.Enums.RoleType.Employee };
+        
         var testProject = new DailyReportSystem.Core.Entities.Project { ProjectName = "Dự án Demo SWD392", Description = "Project Template" };
         
-        context.Users.Add(testUser);
+        context.Users.AddRange(testAdmin, testManager, testEmployee);
         context.Projects.Add(testProject);
         context.SaveChanges(); // Lấy ID vừa được tạo
 
-        context.UserProjects.Add(new DailyReportSystem.Core.Entities.UserProject { UserId = testUser.Id, ProjectId = testProject.Id, AssignedDate = System.DateTime.UtcNow });
+        var testTask = new DailyReportSystem.Core.Entities.ProjectTask { ProjectId = testProject.Id, TaskName = "Thiết kế CSDL", Description = "Lên cấu trúc bảng cho dự án", Status = "Open" };
+        context.ProjectTasks.Add(testTask);
+
+        context.UserProjects.Add(new DailyReportSystem.Core.Entities.UserProject { UserId = testEmployee.Id, ProjectId = testProject.Id, AssignedDate = System.DateTime.UtcNow });
         context.SaveChanges();
     }
 }

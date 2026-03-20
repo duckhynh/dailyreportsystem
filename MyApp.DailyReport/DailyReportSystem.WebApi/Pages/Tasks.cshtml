@@ -1,0 +1,83 @@
+@page
+@{ ViewData["Title"] = "Danh sách Task"; }
+
+<div class="panel" style="max-width: 900px; margin: 0 auto;">
+    <div class="panel-heading">Tasks của Dự án #<span id="proj-id"></span></div>
+    <div class="panel-body">
+        <div style="margin-bottom: 20px;" id="manager-actions"></div>
+
+        <table class="table" style="width: 100%; text-align: left;">
+            <thead>
+                <tr>
+                    <th style="border-bottom: 2px solid #ddd;">ID</th>
+                    <th style="border-bottom: 2px solid #ddd;">Tên Task</th>
+                    <th style="border-bottom: 2px solid #ddd;">Mô tả</th>
+                    <th style="border-bottom: 2px solid #ddd;">Trạng thái</th>
+                    <th style="border-bottom: 2px solid #ddd;">Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="tasks-tbody"></tbody>
+        </table>
+        
+        <div style="margin-top:20px;">
+            <a href="/Projects" class="btn btn-default">Quay lại danh sách Projects</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/Login';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('projectId');
+    document.getElementById('proj-id').textContent = projectId;
+
+    let role = "";
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        role = payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || payload.role;
+    } catch(e) {}
+
+    if (role === "Manager") {
+        document.getElementById('manager-actions').innerHTML = `<button class="btn btn-primary" onclick="window.location.href='/TaskForm?projectId=${projectId}'">Tạo mới Task</button>`;
+    }
+
+    async function loadTasks() {
+        const res = await fetch(`/api/Task/Project/${projectId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) {
+            const data = await res.json();
+            const tbody = document.getElementById('tasks-tbody');
+            tbody.innerHTML = '';
+            if(data.length === 0) tbody.innerHTML = '<tr><td colspan="5">Không có Task nào.</td></tr>';
+            data.forEach(t => {
+                let actions = "";
+                if (role === 'Employee') {
+                    actions += `<button class="btn btn-success btn-sm" onclick="window.location.href='/SubmitReport?taskId=${t.id}&projectId=${t.projectId}'">Nhận/Viết Report</button> `;
+                }
+                if (role === 'Manager') {
+                    actions += `<button class="btn btn-info btn-sm" onclick="window.location.href='/TaskForm?id=${t.id}&projectId=${projectId}'">Sửa</button> `;
+                    actions += `<button class="btn btn-danger btn-sm" onclick="deleteTask(${t.id})">Xoá</button>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="border-bottom: 1px solid #eee;">${t.id}</td>
+                        <td style="border-bottom: 1px solid #eee;"><b>${t.taskName}</b></td>
+                        <td style="border-bottom: 1px solid #eee;">${t.description}</td>
+                        <td style="border-bottom: 1px solid #eee;"><span style="padding: 2px 5px; background: #e0e0e0; border-radius:3px;">${t.status}</span></td>
+                        <td style="border-bottom: 1px solid #eee;">${actions}</td>
+                    </tr>
+                `;
+            });
+        }
+    }
+
+    async function deleteTask(id) {
+        if(!confirm('Xoá Task này?')) return;
+        const res = await fetch(`/api/Task/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) { alert('Thành công!'); loadTasks(); }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadTasks);
+</script>

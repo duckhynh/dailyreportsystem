@@ -1,0 +1,70 @@
+@page
+@{ ViewData["Title"] = "Thêm/Sửa Task"; }
+
+<div class="panel" style="max-width: 600px; margin: 0 auto;">
+    <div class="panel-heading" id="form-title">Task mới</div>
+    <div class="panel-body">
+        <form id="task-form">
+            <div class="form-group">
+                <label>Tên Task:</label>
+                <input type="text" id="taskName" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Mô tả:</label>
+                <textarea id="description" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Trạng thái (Status):</label>
+                <select id="status" class="form-control">
+                    <option value="Open">Open (Mở khả dụng)</option>
+                    <option value="InProgress">In Progress (Đang tiến hành)</option>
+                    <option value="Done">Done (Đã hoàn thành)</option>
+                </select>
+            </div>
+            <hr style="margin: 20px 0;">
+            <button type="submit" class="btn btn-primary">Lưu lại</button>
+            <a href="#" id="backBtn" class="btn btn-default" style="margin-left: 10px;">Quay lại</a>
+        </form>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('id');
+    const projectId = urlParams.get('projectId');
+    document.getElementById('backBtn').href = '/Tasks?projectId=' + projectId;
+
+    if (editId) {
+        document.getElementById('form-title').innerText = "Sửa Task #" + editId;
+        fetch(`/api/Task/${editId}`, { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('taskName').value = data.taskName;
+                document.getElementById('description').value = data.description;
+                document.getElementById('status').value = data.status;
+            });
+    }
+
+    document.getElementById('task-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            projectId: parseInt(projectId),
+            taskName: document.getElementById('taskName').value,
+            description: document.getElementById('description').value,
+            status: document.getElementById('status').value
+        };
+        const method = editId ? 'PUT' : 'POST';
+        const url = editId ? `/api/Task/${editId}` : '/api/Task';
+        
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            alert('Lưu thành công!');
+            window.location.href = '/Tasks?projectId=' + projectId;
+        } else alert('Lỗi khi lưu dữ liệu');
+    });
+</script>

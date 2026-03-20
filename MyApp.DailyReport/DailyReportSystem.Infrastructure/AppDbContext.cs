@@ -11,6 +11,7 @@ namespace DailyReportSystem.Infrastructure
         public DbSet<Project> Projects { get; set; }
         public DbSet<UserProject> UserProjects { get; set; }
         public DbSet<DailyReport> DailyReports { get; set; }
+        public DbSet<ProjectTask> ProjectTasks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -28,6 +29,18 @@ namespace DailyReportSystem.Infrastructure
                 .HasOne(up => up.Project)
                 .WithMany(p => p.UserProjects)
                 .HasForeignKey(up => up.ProjectId);
+
+            modelBuilder.Entity<ProjectTask>()
+                .HasOne(pt => pt.Project)
+                .WithMany(p => p.ProjectTasks)
+                .HasForeignKey(pt => pt.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DailyReport>()
+                .HasOne(dr => dr.ProjectTask)
+                .WithMany(pt => pt.DailyReports)
+                .HasForeignKey(dr => dr.ProjectTaskId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

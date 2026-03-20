@@ -43,9 +43,18 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
         
         if (res.ok) {
             localStorage.setItem('token', data.token);
+            if(data.fullName) localStorage.setItem('fullName', data.fullName);
             const payload = JSON.parse(atob(data.token.split('.')[1]));
+            const role = payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
             localStorage.setItem('userId', payload.nameid || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']);
-            window.location.href = '/SubmitReport';
+            
+            if (role === 'Admin') {
+                window.location.href = '/Users';
+            } else if (role === 'Manager') {
+                window.location.href = '/Projects';
+            } else {
+                window.location.href = '/SubmitReport';
+            }
         } else {
             document.getElementById('error-msg').textContent = data.message || "Tài khoản hoặc mật khẩu không đúng.";
             document.getElementById('error-msg').style.display = 'block';

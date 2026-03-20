@@ -1,94 +1,204 @@
 @page
 @{ ViewData["Title"] = "Thêm báo cáo"; }
 
-<div class="panel" style="max-width: 800px; margin: 0 auto;">
-    <div class="panel-heading">Ghi nhận công việc thực tập (Submit Daily Report)</div>
-    <div class="panel-body">
-        <div id="status-msg" style="display:none;"></div>
+<style>
+    .report-container { max-width: 800px; margin: 40px auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .report-title { font-size: 22px; font-weight: bold; margin-bottom: 30px; text-transform: uppercase; color: #111; }
+    .form-group { margin-bottom: 25px; }
+    .form-label { font-size: 15px; font-weight: 600; color: #111; margin-bottom: 10px; display: block; }
+    .text-danger { color: #dc3545; }
+    .form-control { border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px 14px; font-size: 14px; box-shadow: none; width: 100%; box-sizing: border-box; color: #333; min-height: 46px; }
+    .form-control::placeholder { color: #999; }
+    .form-control:focus { border-color: #a0a0a0; outline: 0; box-shadow: 0 0 0 2px rgba(0,0,0,0.05); }
+    select.form-control { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 15px center; background-size: 14px; }
+    .btn-submit { background-color: #212121; color: white; border: none; padding: 12px 24px; font-size: 15px; font-weight: 500; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+    .btn-submit:hover { background-color: #424242; }
+    .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+</style>
+
+<div class="report-container">
+    <div class="report-title">THÔNG TIN BÁO CÁO</div>
+    <div id="status-msg" style="display:none; padding: 15px; border-radius: 4px; margin-bottom: 25px;"></div>
         
-        <form id="report-form">
-            <div class="form-group" style="padding: 15px; background: #f9f9f9; border: 1px solid #eee; border-radius: 4px;">
-                <label style="color: #d9530f;">Mã Dự án tham gia (Project ID):</label>
-                <input type="number" id="projectId" class="form-control" style="max-width: 200px;" placeholder="Ví dụ: 1" required>
-                <span class="help-block" style="font-size: 13px; color: #555;">(Dự án này bạn được phân công vào mã dự án = 1 trên CSDL)</span>
-            </div>
-            
-            <div class="form-group">
-                <label>Công việc đã hoàn thành (Tasks Done):</label>
-                <textarea id="tasksDone" class="form-control" rows="4" required></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label>Khó khăn/Vướng mắc (Issues):</label>
-                <textarea id="issues" class="form-control" rows="2"></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label>Kế hoạch ngày mai (Tomorrow's Plan):</label>
-                <textarea id="tomorrowPlan" class="form-control" rows="3" required></textarea>
-            </div>
-            
-            <hr style="margin: 20px 0;">
-            <button type="submit" class="btn btn-primary" style="min-width: 100px;">Save changes</button>
-            <a href="/" class="btn btn-default" style="margin-left: 10px;">Return</a>
-        </form>
-    </div>
+    <form id="report-form">
+        <div class="form-group">
+            <label class="form-label">Dự án đang thực hiện <span class="text-danger">*</span></label>
+            <select id="projectId" class="form-control" required onchange="loadTasksForProject()">
+                <option value="">Select a project</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Công việc trực thuộc (Project Task) <span class="text-danger">*</span></label>
+            <select id="projectTaskId" class="form-control" required>
+                <option value="">-- Vui lòng chọn Dự án trước --</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Phòng ban hoạt động <span class="text-danger">*</span></label>
+            <select id="department" class="form-control" required>
+                <option value="">Select a department</option>
+                <option value="Nghiên cứu và phát triển">Nghiên cứu và phát triển</option>
+                <option value="Công nghệ thông tin (IT)">Công nghệ thông tin (IT)</option>
+                <option value="Kinh doanh & Sales">Kinh doanh & Sales</option>
+                <option value="Marketing & Truyền thông">Marketing & Truyền thông</option>
+                <option value="Nhân sự (HR)">Nhân sự (HR)</option>
+                <option value="Tài chính Kế toán">Tài chính Kế toán</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Nội dung công việc <span class="text-danger">*</span></label>
+            <textarea id="tasksDone" class="form-control" rows="3" placeholder="Enter work content" required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Số lượng công việc <span class="text-danger">*</span></label>
+            <input type="text" id="workQuantity" class="form-control" placeholder="Enter quantitative value (e.g., 10)" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Mô tả công việc</label>
+            <textarea id="workDescription" class="form-control" rows="3" placeholder="Enter qualitative description"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Khó khăn</label>
+            <textarea id="issues" class="form-control" rows="3" placeholder="Enter challenges"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Công việc ưu tiên</label>
+            <textarea id="tomorrowPlan" class="form-control" rows="3" placeholder="Enter priority tasks"></textarea>
+        </div>
+        
+        <div style="margin-top: 35px;">
+            <button type="submit" class="btn-submit">Nộp báo cáo</button>
+            <a href="/MyReports" style="margin-left: 20px; color: #555; text-decoration: underline; font-size: 14px;">Xem lịch sử</a>
+        </div>
+    </form>
 </div>
 
 <script>
-if(!localStorage.getItem('token')) {
-    window.location.href = '/Login';
-}
-
-document.getElementById('report-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
     const token = localStorage.getItem('token');
-    const msgBox = document.getElementById('status-msg');
-    const btn = e.target.querySelector('button');
-    
-    btn.disabled = true;
-    btn.textContent = "Processing...";
-    msgBox.style.display = 'none';
+    if(!token) window.location.href = '/Login';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const presetProjectId = urlParams.get('projectId');
+    const presetTaskId = urlParams.get('taskId');
     
     try {
-        const payload = {
-            userId: parseInt(localStorage.getItem('userId')),
-            projectId: parseInt(document.getElementById('projectId').value),
-            tasksDone: document.getElementById('tasksDone').value,
-            issues: document.getElementById('issues').value,
-            tomorrowPlan: document.getElementById('tomorrowPlan').value
-        };
-
-        const res = await fetch('/api/Report', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json', 
-                'Authorization': `Bearer ${token}` 
-            },
-            body: JSON.stringify(payload)
-        });
-        
-        const data = await res.json();
-        
-        if (res.ok) {
-            msgBox.className = 'alert alert-success';
-            msgBox.innerHTML = `<strong>Thành công!</strong> Đã thêm biên lai lưu trữ vào DB. Mã Record ID: ${data.id}`;
-            msgBox.style.display = 'block';
-            document.getElementById('report-form').reset();
-            window.scrollTo(0,0);
-        } else {
-            msgBox.className = 'alert alert-danger';
-            msgBox.innerHTML = `<strong>Thất bại!</strong> Chấm dứt thao tác do vi phạm Business Logic: ${data.message || data.error || "Dữ liệu sai."}`;
-            msgBox.style.display = 'block';
-            window.scrollTo(0,0);
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const role = payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+        if (role !== "Employee") {
+            alert("Trang web này chỉ dành cho Nhân viên (Employee). Bạn không có quyền nộp báo cáo.");
+            window.location.href = '/';
         }
-    } catch(err) {
-        msgBox.className = 'alert alert-danger';
-        msgBox.innerHTML = `<strong>Lỗi kết nối Socket TCP!</strong> C# Server không phản hồi.`;
-        msgBox.style.display = 'block';
-    } finally {
-        btn.disabled = false;
-        btn.textContent = "Save changes";
+    } catch(e) {}
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        if(presetTaskId) {
+            // Sẽ gán sau khi load xong tasks của project
+        }
+
+        try {
+            const res = await fetch('/api/Project', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (res.ok) {
+                const projects = await res.json();
+                const sel = document.getElementById('projectId');
+                projects.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.text = p.projectName;
+                    sel.appendChild(opt);
+                });
+
+                if (presetProjectId) {
+                    sel.value = presetProjectId;
+                    await loadTasksForProject(presetTaskId);
+                }
+            }
+        } catch(e) { console.error(e); }
+    });
+
+    async function loadTasksForProject(autoSelectTaskId = null) {
+        const projId = document.getElementById('projectId').value;
+        const taskSel = document.getElementById('projectTaskId');
+        taskSel.innerHTML = '<option value="">-- Chọn Task --</option>';
+
+        if (!projId) return;
+
+        try {
+            const res = await fetch(`/api/Task/Project/${projId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (res.ok) {
+                const tasks = await res.json();
+                tasks.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.text = `[${t.status}] ${t.taskName}`;
+                    taskSel.appendChild(opt);
+                });
+
+                if (autoSelectTaskId) {
+                    taskSel.value = autoSelectTaskId;
+                }
+            }
+        } catch(e) { console.error(e); }
     }
-});
+
+    document.getElementById('report-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const msgBox = document.getElementById('status-msg');
+        const btn = e.target.querySelector('button');
+        
+        btn.disabled = true;
+        btn.textContent = "Processing...";
+        msgBox.style.display = 'none';
+        
+        try {
+            const taskIdVal = document.getElementById('projectTaskId').value;
+            const payload = {
+                userId: parseInt(localStorage.getItem('userId')),
+                projectId: parseInt(document.getElementById('projectId').value),
+                projectTaskId: taskIdVal ? parseInt(taskIdVal) : null,
+                department: document.getElementById('department').value,
+                tasksDone: document.getElementById('tasksDone').value,
+                workQuantity: document.getElementById('workQuantity').value,
+                workDescription: document.getElementById('workDescription').value,
+                issues: document.getElementById('issues').value,
+                tomorrowPlan: document.getElementById('tomorrowPlan').value
+            };
+
+            const res = await fetch('/api/Report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await res.json();
+            
+            if (res.ok) {
+                msgBox.className = 'alert-success';
+                msgBox.innerHTML = `<strong>Thành công!</strong> Đã thêm báo cáo vào hệ thống. Record ID: #${data.id}`;
+                msgBox.style.display = 'block';
+                document.getElementById('report-form').reset();
+                window.scrollTo(0,0);
+            } else {
+                msgBox.className = 'alert-danger';
+                msgBox.innerHTML = `<strong>Thất bại!</strong> Chấm dứt thao tác do vi phạm API Validation.`;
+                msgBox.style.display = 'block';
+                window.scrollTo(0,0);
+            }
+        } catch(err) {
+            msgBox.className = 'alert-danger';
+            msgBox.innerHTML = `<strong>Lỗi kết nối Socket TCP!</strong> C# Server không phản hồi.`;
+            msgBox.style.display = 'block';
+            window.scrollTo(0,0);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Nộp báo cáo";
+        }
+    });
 </script>
